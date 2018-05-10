@@ -112,7 +112,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	fmt.Println(commandName, message)
 
 	switch commandName {
-	case "clean", "c", "javel", "j":
+	case "dust", "d", "clean", "c", "javel", "j":
 		var offset = 1
 		var scanIndex = 0
 		var beforeID = ""
@@ -120,11 +120,19 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			beforeID = args[1]
 			scanIndex = 2
 			offset = 0
+		} else if len(args) == 1 {
+			scanIndex = 0
+		} else {
+			s.ChannelMessageSend(c.ID, "Syntaxe invalide")
+			return
 		}
 		nbToScan, err := strconv.Atoi(args[scanIndex])
 		if err != nil {
 			s.ChannelMessageSend(c.ID, "Syntaxe invalide")
 			fmt.Println("Syntaxe invalide: ", err)
+			return
+		} else if nbToScan+offset > 100 {
+			s.ChannelMessageSend(c.ID, "Trop de message a scanner =(")
 			return
 		}
 
@@ -134,17 +142,20 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			fmt.Println("Erreur lors de la recuperation des messages: ", err)
 			return
 		}
+
 		fmt.Println(len(messages))
 		var filterFunction FilterFunction
 		switch commandName {
-		case "clean", "c":
+		case "dust", "d":
 			filterFunction = filterGabCommands
+		case "clean", "c":
+			filterFunction = filterGab
 		case  "javel", "j":
 			filterFunction = filterNone
-
 		}
 		messageIds := getMessagesIdsToDelete(messages, filterFunction)
 
+		fmt.Println(len(messageIds), "choses a supprimer")
 		err = s.ChannelMessagesBulkDelete(c.ID, messageIds)
 		if err != nil {
 			s.ChannelMessageSend(c.ID, "Erreur lors de la suppression des messages")
@@ -153,17 +164,17 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 		switch commandName {
 		case "clean", "c":
-			s.ChannelMessageSend(c.ID, "Et voilà! Tout Propre! J'ai trié " +
-				strconv.Itoa(nbToScan) + " messages")
+			s.ChannelMessageSend(c.ID, "Et voilà! Tout Propre! J'ai supprimé " +
+				strconv.Itoa(len(messageIds)) + " messages")
 
 		case "javel", "j":
 			s.ChannelMessageSend(c.ID, "Et voilà! Tout Propre! J'ai supprimé " +
-				strconv.Itoa(nbToScan) + " messages")
+				strconv.Itoa(len(messageIds)) + " messages")
 		}
 
 	case "help":
 		s.ChannelMessageSend(c.ID,
-			defaultPrefix+"<clean|javel> [before <id du message>] <nb de message à suppr(max 100)>")
+			defaultPrefix+"<dust|clean|javel> [before <id du message>] <nb de message à suppr(max 99)>")
 	}
 }
 
