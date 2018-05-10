@@ -120,8 +120,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			beforeID = args[1]
 			scanIndex = 2
 			offset = 0
-		} else {
-
 		}
 		nbToScan, err := strconv.Atoi(args[scanIndex])
 		if err != nil {
@@ -130,9 +128,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 
-
-
-		// il faut prendre en compte le message de suppression, on ajoute 1 a nbToScan
 		messages, err := s.ChannelMessages(c.ID, nbToScan+offset, beforeID, "", "")
 		if err != nil {
 			s.ChannelMessageSend(c.ID, "Erreur lors de la recuperation des messages")
@@ -145,7 +140,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case "clean", "c":
 			filterFunction = filterGabCommands
 		case  "javel", "j":
-			filterFunction = nil
+			filterFunction = filterNone
 
 		}
 		messageIds := getMessagesIdsToDelete(messages, filterFunction)
@@ -173,8 +168,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func getMessagesIdsToDelete(messages []*discordgo.Message, filterFunc FilterFunction) (messageIds []string) {
+	if filterFunc == nil {
+		return
+	}
+
 	for _, message := range messages {
-		if filterFunc != nil && filterFunc(message) {
+		if filterFunc(message) {
 			messageIds = append(messageIds, message.ID)
 		}
 	}
@@ -194,4 +193,8 @@ func filterGab(message *discordgo.Message) bool {
 		return true
 	}
 	return false
+}
+
+func filterNone(message *discordgo.Message) bool {
+	return true
 }
