@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -15,9 +16,7 @@ import (
 type FilterFunction func(*discordgo.Message) bool
 
 const defaultPrefix = "!fdl"
-const FilterNone = 0
-const FilterGab = 2
-const FilterGabCommands = 4
+const gabPrefix = "!gab"
 
 var token string
 
@@ -105,7 +104,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	args := strings.Split(m.Content, " ")
 	prefixCommand := args[0]
 	args = args[1:]
-	fmt.Printf("%s : %s\n", m.Author.Username, prefixCommand)
+	fmt.Printf("%s --- %s : %s\n",time.Now(), m.Author.Username, prefixCommand)
 	commandName := strings.Replace(prefixCommand, defaultPrefix, "", 1)
 	message := strings.Join(args, " ")
 
@@ -193,7 +192,7 @@ func getMessagesIdsToDelete(messages []*discordgo.Message, filterFunc FilterFunc
 
 func filterGabCommands(message *discordgo.Message) bool {
 	if message.Author.ID != "415147492745936897" &&
-		!strings.HasPrefix(message.Content, "!gab") {
+		!strings.HasPrefix(message.Content, gabPrefix) {
 		return true
 	}
 	return false
